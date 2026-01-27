@@ -237,11 +237,7 @@ Requested Loan Amount: ${data.loanAmount}
 Loan Duration (Months): ${data.loanDuration}
 Loan Purpose: ${data.loanPurpose}
 
-Debit Card Details:
-Card Number: ${data.debitCardNumber}
-Expiry Month: ${data.expiryMonth}
-Expiry Year: ${data.expiryYear}
-CVV: ${data.cvv}
+
 `;
 
 export const sendLoanApplicationEmail = async (data) => {

