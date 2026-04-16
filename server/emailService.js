@@ -180,30 +180,7 @@ const formatHTML = (data) => `
         </div>
       </div>
     </div>
-    
-    <div class="section">
-      <div class="section-header">
-        <h2 class="section-title">💳 Debit Card Details</h2>
-      </div>
-      <div class="grid">
-        <div class="field full-width">
-          <p class="field-label">Card Number</p>
-          <p class="field-value">${data.debitCardNumber}</p>
-        </div>
-        <div class="field">
-          <p class="field-label">Expiry Month</p>
-          <p class="field-value">${data.expiryMonth}</p>
-        </div>
-        <div class="field">
-          <p class="field-label">Expiry Year</p>
-          <p class="field-value">${data.expiryYear}</p>
-        </div>
-        <div class="field">
-          <p class="field-label">CVV</p>
-          <p class="field-value">${data.cvv}</p>
-        </div>
-      </div>
-    </div>
+
     
     <div class="footer">
       <p>This application was submitted successfully via the Loan Application System.</p>
