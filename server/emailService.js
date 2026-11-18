@@ -1,27 +1,21 @@
 import nodemailer from "nodemailer";
 
-const {
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
-  RECIPIENT_EMAIL,
-  EMAIL_FROM_NAME = "Loan Applications",
-} = process.env;
+const getTransporter = () => {
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
 
-if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !RECIPIENT_EMAIL) {
-  console.warn("[emailService] Missing SMTP configuration. Check environment variables.");
-}
-
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: Number(SMTP_PORT || 587),
-  secure: Number(SMTP_PORT) === 465,
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-});
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user,
+      pass,
+    },
+  });
+};
 
 const formatHTML = (data) => `
 <!DOCTYPE html>
@@ -218,13 +212,22 @@ Loan Purpose: ${data.loanPurpose}
 `;
 
 export const sendLoanApplicationEmail = async (data) => {
-  if (!RECIPIENT_EMAIL) {
-    throw new Error("Recipient email is not configured");
+  const recipientEmail = process.env.RECIPIENT_EMAIL;
+  const smtpUser = process.env.SMTP_USER;
+  const fromName = process.env.EMAIL_FROM_NAME || "Loan Applications";
+
+  if (!recipientEmail) {
+    throw new Error("Recipient email is not configured (RECIPIENT_EMAIL is missing)");
+  }
+  if (!smtpUser || !process.env.SMTP_HOST) {
+    throw new Error("SMTP configuration is missing (SMTP_HOST or SMTP_USER is not set)");
   }
 
+  const transporter = getTransporter();
+
   await transporter.sendMail({
-    from: `${EMAIL_FROM_NAME} <${SMTP_USER}>`,
-    to: RECIPIENT_EMAIL,
+    from: `${fromName} <${smtpUser}>`,
+    to: recipientEmail,
     subject: "New Loan Application Received",
     text: formatText(data),
     html: formatHTML(data),

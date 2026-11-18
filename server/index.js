@@ -1,4 +1,13 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config({ path: path.resolve(process.cwd(), "server/.env") });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -9,6 +18,8 @@ import { sendLoanApplicationEmail } from "./emailService.js";
 const app = express();
 const port = process.env.PORT || 10000;
 
+app.set("trust proxy", 1);
+
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean);
 
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -16,23 +27,24 @@ app.use(express.json({ limit: "1mb" }));
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        callback(null, origin);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
+      // Allow all origins (standard for public loan application endpoints across preview and live URLs)
+      callback(null, true);
     },
+    credentials: true,
   }),
 );
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+if (!process.env.VERCEL) {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false },
+  });
 
-app.use(limiter);
+  app.use(limiter);
+}
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
@@ -87,7 +99,11 @@ app.post("/api/loan-application", async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error("Unhandled error", err);
-  res.status(500).json({ message: "Internal server error" });
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    message: err.message || "Internal server error",
+    error: err.message || "Internal server error",
+  });
 });
 
 if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
